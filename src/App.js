@@ -1,7 +1,6 @@
 import React, {Component} from 'react';
 import Tween from 'rc-tween-one';
 import propTypes from 'prop-types';
-import imgUrl from './img/sjb.jpg'
 import './App.css';
 
 class Block extends Component {
@@ -10,7 +9,7 @@ class Block extends Component {
         y: propTypes.number.isRequired,
         width: propTypes.number.isRequired,
         height: propTypes.number.isRequired,
-        img:propTypes.string.isRequired
+        img: propTypes.string.isRequired
     }
 
     constructor(props) {
@@ -18,11 +17,12 @@ class Block extends Component {
     }
 
     render() {
-        const {x, y, width, height} = this.props;
+        const {x, y, width, height, img} = this.props;
 
         return (
             <ul className={'block'}>
-                <li style={{background:`url(${imgUrl})   ` }} className="front"></li>
+                <li style={{background: `url(${img}) no-repeat ${-x} ${-y}`, width: width, height: height}}
+                    className="front"></li>
                 <li className="back"></li>
                 <li className="top"></li>
                 <li className="bottom"></li>
