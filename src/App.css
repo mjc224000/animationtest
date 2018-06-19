@@ -1,0 +1,22 @@
+*{
+    padding: 0;
+    margin: 0;
+}
+li{
+    list-style: none;
+
+}
+.wrap{
+    transform-style: preserve-3d;
+    perspective: 2000px;
+
+}
+.swing{
+    background: url("./img/sjb.jpg") no-repeat;
+    background-size: cover;
+    width: 800px;
+    height: 600px;
+}
+.block .front{
+
+}
