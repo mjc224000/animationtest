@@ -3,7 +3,7 @@ import Tween from 'rc-tween-one';
 import propTypes from 'prop-types';
 import './App.css';
 import imgUrl from './img/sjb.jpg'
-
+import aUrl from './img/another.jpg';
 class Block extends Component {
     static propTypes = {
         x: propTypes.number.isRequired,
@@ -11,8 +11,8 @@ class Block extends Component {
         width: propTypes.number.isRequired,
         height: propTypes.number.isRequired,
         img: propTypes.string.isRequired,
-        deX: propTypes.string.isRequired,
-        deY: propTypes.string.isRequired
+        deX: propTypes.number.isRequired,
+        deY: propTypes.number.isRequired
     }
 
     constructor(props) {
@@ -20,7 +20,7 @@ class Block extends Component {
     }
 
     render() {
-        const {x, y, width, height, img, delay,deX,deY} = this.props;
+        const {x, y, width, height, img, delay, deX, deY} = this.props;
 
         return (
             <Tween style={{
@@ -34,11 +34,18 @@ class Block extends Component {
             }}
 
                    animation={[
-                       {x:deX,y:deY,rotateX:Math.random()*360+'deg' ,rotateY:Math.random()*360+'deg',   ease:'easeOutElastic',duration:2000},
-                       {rotateY:0,rotateX:0,duration:200,delay},
-                       {x:0,y:0, ease:'easeOutElastic',duration:2000},
-                       {rotateX:180,rotate:180,delay:delay+2000}
-                   /*    {rotateX: '180deg',rotateY:'180deg', duration: 2000, ease: "easeOutBounce", delay},*/
+                       {
+                           x: deX,
+                           y: deY,
+                           rotateX: Math.random() * 360 + 'deg',
+                           rotateY: Math.random() * 360 + 'deg',
+                           ease: 'easeOutElastic',
+                           duration: 2000
+                       },
+                       {rotateY: 0, rotateX: 0, duration: 200, delay},
+                       {x: 0, y: 0, ease: 'easeOutElastic', duration: 2000},
+                       {rotateX: 180, rotate: 180, delay: delay + 2000, onComplete: this.props.onComplete}
+                       /*    {rotateX: '180deg',rotateY:'180deg', duration: 2000, ease: "easeOutBounce", delay},*/
 
                    ]}
             >
@@ -72,6 +79,11 @@ class Block extends Component {
     }
 }
 
+var store={
+    count:0,
+    arr:[],
+}
+
 class App extends Component {
     static defaultProps = {
         column: 4,
@@ -100,6 +112,17 @@ class App extends Component {
         return res
     }
 
+    onComplete(v) {
+
+        v.target['isFirst']=false;
+        const {column, row} = this.props,
+            total = column * row;
+        store.count++;
+        if (store.count == total) {
+            console.log(store.count);
+        }
+    }
+
     getDistance({x, y}) {
         var centerX = this.props.width / 2,
             centerY = this.props.height / 2;
@@ -116,9 +139,9 @@ class App extends Component {
         return (
             <div className={'wrap'}>
                 {blockArr.map(v => {
-                    const {x,y}=v,
-                        {deX,deY}=this.getDistance({x,y});
-                    return <Block {...v} deX={deX} deY={deY}/>
+                    const {x, y} = v,
+                        {deX, deY} = this.getDistance({x, y});
+                    return <Block {...v} onComplete={this.onComplete.bind(this)} deX={deX} deY={deY}/>
                 })}
 
 
