@@ -3,13 +3,10 @@ import Tween from 'rc-tween-one';
 import propTypes from 'prop-types';
 import './App.css';
 import imgUrl from './img/sjb.jpg'
-import aUrl from './img/another.jpg'
-const Separate = 'Separate'
-var store = {
-    count: 0,
-    arr: [],
-    animateData: []
-}
+
+const Separate = 'Separate';
+const Flip = '超级无敌宇宙螺旋香蕉翻';
+const Spiral = 'Spiral'
 
 class Block extends Component {
     static propTypes = {
@@ -35,7 +32,7 @@ class Block extends Component {
                 width: width,
                 height: height
             }}
-                   animation={this.props.animation} >
+                   animation={this.props.animation}>
                 <ul className={'block'}>
                     <li style={{
                         backgroundImage: `url(${frontImg}) `,
@@ -77,29 +74,36 @@ class App extends Component {
 
     componentWillMount() {
         const {column, row} = this.props;
-        for (var i = 0; i < column; i++) {
-            for (var j = 0; j < row; j++) {
-                this.getSeparate({x: i, y: j})
+        let Sep = [],
+            Fli = [],
+            Spi = [];
+        for (let i = 0; i < column; i++) {
+            for (let j = 0; j < row; j++) {
+                let key = i + '_' + j;
+                Sep[key] = this.getSeparate({x: i, y: j});
+                Fli[key] = this.getFlip({x: i, y: j});
+                Spi[key] = this.getSpiral({x: i, y: j});
             }
         }
+        let res = [];
+        res[Separate] = Sep;
+        res[Flip] = Fli;
+        res[Spiral] = Spi
+        this.setState({animateData: res});
     }
 
     constructor(props) {
         super(props);
-        this.state = {frontImg: imgUrl, total: 0}
+        this.state = {
+            frontImg: imgUrl,
+            animateData: [],
+            currentAnimationName: Separate
+        }
         this.getSeparate = this.getSeparate.bind(this);
     }
 
     getSeparate({x, y}) {
-        var key = x + '_' + y;
-        if (!store.animateData[Separate]) {
-            store.animateData[Separate] = [];
-        }
-        if (store.animateData[Separate][key]) {
-            return store.animateData[Separate][key]
-        }
         const {width, height, column, row} = this.props
-
         var centerX = width / 2,
             centerY = height / 2,
             blockWidth = width / column,
@@ -114,11 +118,30 @@ class App extends Component {
             ease: 'easeOutElastic',
             duration: 2000
         },
-            {rotateX: 0, rotateY: 0, ease: 'easeOutElastic', duration: 200},
-            {x: 0, y: 0, ease: 'easeOutElastic', duration: 2000,onComplete:this.onComplete}
+            {rotateX: 0, rotateY: 0, ease: 'easeOutElastic', duration: 200, delay: Math.random() * 1000},
+            {x: 0, y: 0, ease: 'easeOutElastic', duration: 2000, onComplete: this.onComplete}
         ]
-        store.animateData[Separate][key] = data
         return data
+    }
+
+    getFlip() {
+        return {rotateX: 180, rotate: 180, duration: 1000, delay: Math.random() * 1000}
+    }
+
+    getSpiral({x, y}) {
+        const {width, height, column, row} = this.props
+        var centerX = width / 2,
+            centerY = height / 2,
+            blockWidth = width / column,
+            blockHeight = height / row,
+            singularX = -x * blockWidth,
+            singularY = -y * blockHeight;
+        return [
+            {rotateX: 0, rotate: 0, rotateY: 0, duration: 200},
+            {x: singularX + centerX, y: singularY + centerY},
+            {rotateX: x / column * 360, rotateY: y / row * 360,},
+            {translateZ:-800,delay:1000}
+        ]
     }
 
     makeBlock() {
@@ -142,32 +165,24 @@ class App extends Component {
 
     onComplete = (() => {
         const {column, row} = this.props;
-       const total = column * row;
-       let count=0;
-        return ()=>{
+        const total = column * row;
+        let count = 0;
+        return () => {
             count++
-            if(count===total)
-            setTimeout(() => this.setState({frontImg: aUrl}))
+            if (count === total)
+                setTimeout(() => this.setState({currentAnimationName: Spiral}))
         }
     })()
 
-    /*    onComplete() {
-            const {column, row} = this.props,
-                total = column * row;
-            store.count++;
-            if (store.count === total) {
-                setTimeout(() => this.setState({frontImg: aUrl}, () => store.count = 0))
-            }
-        }*/
-
     render() {
-        var blockArr = this.makeBlock();
+        var blockArr = this.makeBlock(),
+            name = this.state.currentAnimationName;
 
         return (
             <div className={'wrap'}>
                 {blockArr.map(v => {
                     return <Block key={v.key} {...v} frontImg={this.state.frontImg} onComplete={this.onComplete}
-                                  animation={store.animateData[Separate][v.key]}/>
+                                  animation={this.state.animateData[name][v.key]}/>
                 })}
             </div>)
     }
