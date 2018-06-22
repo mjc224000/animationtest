@@ -5,8 +5,8 @@ import './App.css';
 import imgUrl from './img/sjb.jpg'
 
 const Separate = 'Separate';
-const Flip = '超级无敌宇宙螺旋香蕉翻';
-const Spiral = 'Spiral'
+const Flip = 'Flip';
+const Spiral = 'Spiral';
 const WrapRotate = 'WrapRotate';
 
 class Block extends Component {
@@ -98,6 +98,18 @@ class App extends Component {
         res[Flip] = Fli;
         res[Spiral] = Spi;
         res[WrapRotate] = WR;
+        let result = [];
+        var _this = this;
+        [Separate, Flip, Spiral, WrapRotate].forEach(function (v) {
+            for (let i = 0; i < column; i++) {
+                for (let j = 0; j < row; j++) {
+                    result[v] = _this['get' + v]({x: i, y: j});
+                }
+            }
+        })
+        console.log(res,result);
+
+
         this.setState({animateData: res});
     }
 
@@ -107,6 +119,7 @@ class App extends Component {
             frontImg: imgUrl,
             animateData: [],
             currentInnerAnimationName: Separate,
+            currentOuterAnimationName: '',
             outer: [],
             Style: {font: 'inherit'}
         }
@@ -194,6 +207,7 @@ class App extends Component {
         }
         return res
     }
+
     onComplete = ((cb) => {
         const {column, row} = this.props;
         const total = column * row;
