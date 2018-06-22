@@ -8,6 +8,8 @@ const Separate = 'Separate';
 const Flip = 'Flip';
 const Spiral = 'Spiral';
 const WrapRotate = 'WrapRotate';
+const Default = 'Default';
+const SpiralBlast = 'SpiralBlast';
 
 class Block extends Component {
     static propTypes = {
@@ -36,7 +38,11 @@ class Block extends Component {
 
             }}
                    animation={this.props.animation}>
-                <Tween animation={[]}>
+                <Tween animation={this.props.outAnimation} style={{
+                    transformStyle: 'preserve-3d',
+                    perspective: '2000px',
+                    transformOrigin: '50% 50%',
+                }}>
                     <ul className={'block'}>
                         <li style={{
                             backgroundImage: `url(${frontImg}) `,
@@ -72,7 +78,7 @@ class Block extends Component {
 
 class App extends Component {
     static defaultProps = {
-        column: 4,
+        column:4,
         row: 6,
         width: 1200,
         height: 600,
@@ -80,37 +86,17 @@ class App extends Component {
 
     componentWillMount() {
         const {column, row} = this.props;
-        let Sep = [],
-            Fli = [],
-            Spi = [],
-            WR = [];
-        for (let i = 0; i < column; i++) {
-            for (let j = 0; j < row; j++) {
-                let key = i + '_' + j;
-                Sep[key] = this.getSeparate({x: i, y: j});
-                Fli[key] = this.getFlip({x: i, y: j});
-                Spi[key] = this.getSpiral({x: i, y: j});
-                WR[key] = this.getWrapRotate({x: i, y: j})
-            }
-        }
-        let res = [];
-        res[Separate] = Sep;
-        res[Flip] = Fli;
-        res[Spiral] = Spi;
-        res[WrapRotate] = WR;
         let result = [];
         var _this = this;
-        [Separate, Flip, Spiral, WrapRotate].forEach(function (v) {
+        [Separate, Flip, Spiral, WrapRotate, Spiral, SpiralBlast].forEach(function (v) {
             for (let i = 0; i < column; i++) {
                 for (let j = 0; j < row; j++) {
-                    result[v] = _this['get' + v]({x: i, y: j});
+                    result[v] = result[v] || [];
+                    result[v][i + '_' + j] = _this['get' + v]({x: i, y: j});
                 }
             }
         })
-        console.log(res,result);
-
-
-        this.setState({animateData: res});
+        this.setState({animateData: result});
     }
 
     constructor(props) {
@@ -120,7 +106,6 @@ class App extends Component {
             animateData: [],
             currentInnerAnimationName: Separate,
             currentOuterAnimationName: '',
-            outer: [],
             Style: {font: 'inherit'}
         }
         this.getSeparate = this.getSeparate.bind(this);
@@ -133,8 +118,20 @@ class App extends Component {
             switch (num) {
                 case 0: {
                     this.setState({currentInnerAnimationName: Flip});
-                    num++
+                    num++;
+                    return
                 }
+                case 1: {
+                    this.setState({currentInnerAnimationName: Spiral})
+                    num++;
+                    return
+                }
+                case 2: {
+
+                    this.setState({currentOuterAnimationName: SpiralBlast, currentInnerAnimationName: Default});
+                    return
+                }
+
             }
         }
     })()
@@ -162,7 +159,7 @@ class App extends Component {
     }
 
     getFlip() {
-        return {rotateX: 180, rotate: 180, duration: 1000, delay: Math.random() * 1000}
+        return {rotateX: 180, rotate: 180, duration: 1000, delay: Math.random() * 1000, onComplete: this.onComplete}
     }
 
     getSpiral({x, y}) {
@@ -176,17 +173,18 @@ class App extends Component {
         return [
             {rotateX: 0, rotate: 0, rotateY: 0, duration: 200},
             {x: singularX + centerX, y: singularY + centerY},
-            {rotateX: x / column * 360, rotateY: y / row * 360}
+            {translateZ: -400},
+            {rotateX: parseInt(x / column * 360), rotateY: parseInt(y / row * 360), onComplete: this.onComplete}
         ]
     }
 
     getWrapRotate({x, y}) {
         const {column, row} = this.props
-        return [{rotateX: x / column * 360, rotateY: y / row * 360}]
+        return [{rotateX: x / column * 360, rotateY: y / row * 360, translateZ: -400}]
     }
 
-    SpiralBlast() {
-        return [{translateZ: 800}]
+    getSpiralBlast() {
+        return [{translateZ: 300}]
     }
 
     makeBlock() {
@@ -217,6 +215,7 @@ class App extends Component {
             if (count === total) {
                 setTimeout(function () {
                     cb();
+                    count = 0;
                 })
             }
         }
@@ -224,12 +223,17 @@ class App extends Component {
 
     render() {
         var blockArr = this.makeBlock(),
-            name = this.state.currentInnerAnimationName;
+            name = this.state.currentInnerAnimationName,
+            outerName = this.state.currentOuterAnimationName;
+        let outerAnimation = this.state.animateData[outerName] || [],
+            innerAnimation = this.state.animateData[name] || [];
+        console.log(outerAnimation);
         return (
             <div className={'wrap'}>
                 {blockArr.map(v => {
                     return <Block key={v.key} {...v} frontImg={this.state.frontImg}
-                                  animation={this.state.animateData[name][v.key]}/>
+                                  outAnimation={outerAnimation[v.key]}
+                                  animation={innerAnimation[v.key]}/>
                 })}
             </div>)
     }
