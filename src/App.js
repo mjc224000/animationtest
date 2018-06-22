@@ -7,6 +7,7 @@ import imgUrl from './img/sjb.jpg'
 const Separate = 'Separate';
 const Flip = '超级无敌宇宙螺旋香蕉翻';
 const Spiral = 'Spiral'
+const WrapRotate = 'WrapRotate';
 
 class Block extends Component {
     static propTypes = {
@@ -15,6 +16,7 @@ class Block extends Component {
         width: propTypes.number.isRequired,
         height: propTypes.number.isRequired,
         frontImg: propTypes.string.isRequired,
+        Style: {font: 'inherit'}
     }
 
     constructor(props) {
@@ -30,35 +32,39 @@ class Block extends Component {
                 perspective: '2000px',
                 transformOrigin: '50% 50%',
                 width: width,
-                height: height
+                height: height,
+
             }}
                    animation={this.props.animation}>
-                <ul className={'block'}>
-                    <li style={{
-                        backgroundImage: `url(${frontImg}) `,
-                        width: width, height: height,
-                        backgroundPosition: -x + 'px ' + -y + 'px',
-                        backgroundSize: '1200px 600px'
-                    }}
-                        className="front"></li>
-                    <li className="back"
-                        style={{
+                <Tween animation={[]}>
+                    <ul className={'block'}>
+                        <li style={{
+                            backgroundImage: `url(${frontImg}) `,
                             width: width, height: height,
-                            transformOrigin: '50% 50%',
-                            textAlign: 'center',
-                            lineHeight: '100%',
-                            transform: ` translateZ(${-height / 4}px) rotateX(180deg) rotate(180deg) `
-                        }}>
-                        hire me
-                    </li>
-                    <li className="top" style={{width: width, height: height / 4}}></li>
-                    <li className="bottom" style={{
-                        width: width, height: height / 4,
-                        transform: `translateY(${height}px) rotateX(90deg) translateY(${-height / 4}px)`
-                    }}></li>
-                    <li className="left"></li>
-                    <li className="right"></li>
-                </ul>
+                            backgroundPosition: -x + 'px ' + -y + 'px',
+                            backgroundSize: '1200px 600px'
+                        }}
+                            className="front"></li>
+                        <li className="back"
+                            style={{
+                                width: width, height: height,
+                                transformOrigin: '50% 50%',
+                                textAlign: 'center',
+                                lineHeight: '100%',
+                                transform: ` translateZ(${-height / 4}px) rotateX(180deg) rotate(180deg) `
+                            }}>
+                            hire me
+                        </li>
+                        <li className="top" style={{width: width, height: height / 4}}></li>
+                        <li className="bottom" style={{
+                            width: width, height: height / 4,
+                            transform: `translateY(${height}px) rotateX(90deg) translateY(${-height / 4}px)`
+                        }}></li>
+                        <li className="left"></li>
+                        <li className="right"></li>
+                    </ul>
+                </Tween>
+
             </Tween>)
     }
 }
@@ -76,19 +82,22 @@ class App extends Component {
         const {column, row} = this.props;
         let Sep = [],
             Fli = [],
-            Spi = [];
+            Spi = [],
+            WR = [];
         for (let i = 0; i < column; i++) {
             for (let j = 0; j < row; j++) {
                 let key = i + '_' + j;
                 Sep[key] = this.getSeparate({x: i, y: j});
                 Fli[key] = this.getFlip({x: i, y: j});
                 Spi[key] = this.getSpiral({x: i, y: j});
+                WR[key] = this.getWrapRotate({x: i, y: j})
             }
         }
         let res = [];
         res[Separate] = Sep;
         res[Flip] = Fli;
-        res[Spiral] = Spi
+        res[Spiral] = Spi;
+        res[WrapRotate] = WR;
         this.setState({animateData: res});
     }
 
@@ -97,13 +106,28 @@ class App extends Component {
         this.state = {
             frontImg: imgUrl,
             animateData: [],
-            currentAnimationName: Separate
+            currentInnerAnimationName: Separate,
+            outer: [],
+            Style: {font: 'inherit'}
         }
         this.getSeparate = this.getSeparate.bind(this);
+        this.onComplete = this.onComplete(() => this.animationQueueManager()).bind(this)
     }
 
+    animationQueueManager = (() => {
+        var num = 0;
+        return () => {
+            switch (num) {
+                case 0: {
+                    this.setState({currentInnerAnimationName: Flip});
+                    num++
+                }
+            }
+        }
+    })()
+
     getSeparate({x, y}) {
-        const {width, height, column, row} = this.props
+        const {width, height, column, row} = this.props;
         var centerX = width / 2,
             centerY = height / 2,
             blockWidth = width / column,
@@ -139,9 +163,17 @@ class App extends Component {
         return [
             {rotateX: 0, rotate: 0, rotateY: 0, duration: 200},
             {x: singularX + centerX, y: singularY + centerY},
-            {rotateX: x / column * 360, rotateY: y / row * 360,},
-            {translateZ:-800,delay:1000}
+            {rotateX: x / column * 360, rotateY: y / row * 360}
         ]
+    }
+
+    getWrapRotate({x, y}) {
+        const {column, row} = this.props
+        return [{rotateX: x / column * 360, rotateY: y / row * 360}]
+    }
+
+    SpiralBlast() {
+        return [{translateZ: 800}]
     }
 
     makeBlock() {
@@ -162,26 +194,27 @@ class App extends Component {
         }
         return res
     }
-
-    onComplete = (() => {
+    onComplete = ((cb) => {
         const {column, row} = this.props;
         const total = column * row;
         let count = 0;
         return () => {
             count++
-            if (count === total)
-                setTimeout(() => this.setState({currentAnimationName: Spiral}))
+            if (count === total) {
+                setTimeout(function () {
+                    cb();
+                })
+            }
         }
-    })()
+    })
 
     render() {
         var blockArr = this.makeBlock(),
-            name = this.state.currentAnimationName;
-
+            name = this.state.currentInnerAnimationName;
         return (
             <div className={'wrap'}>
                 {blockArr.map(v => {
-                    return <Block key={v.key} {...v} frontImg={this.state.frontImg} onComplete={this.onComplete}
+                    return <Block key={v.key} {...v} frontImg={this.state.frontImg}
                                   animation={this.state.animateData[name][v.key]}/>
                 })}
             </div>)
